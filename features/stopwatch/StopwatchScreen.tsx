@@ -4,9 +4,9 @@ import { View, Text, StyleSheet } from "react-native";
 export default function StatsScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Stats page</Text>
+      <Text style={styles.title}>Stopwatch page</Text>
 
-      <Text>Stats page</Text>
+      <Text>Stopwatch page</Text>
     </View>
   );
 }
