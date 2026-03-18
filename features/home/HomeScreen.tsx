@@ -1,12 +1,12 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, FlatList } from "react-native";
 
-export default function StatsScreen() {
+export default function TaskListScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Stats page</Text>
+      <Text style={styles.title}>Home screen page</Text>
 
-      <Text>Stats page</Text>
+      <Text>Homescreen page</Text>
     </View>
   );
 }
