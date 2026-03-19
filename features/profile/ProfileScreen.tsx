@@ -1,12 +1,22 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, Button, StyleSheet } from "react-native";
+import { signOut } from "firebase/auth";
+import { auth} from "../../firebase/config";
 
-export default function StatsScreen() {
+export default function ProfileScreen() {
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error: any) {
+      console.log("Logout failed:", error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Profile page</Text>
+      <Text>Profile</Text>
 
-      <Text>Profile page</Text>
+      <Button title="Logout" onPress={handleLogout} />
     </View>
   );
 }
@@ -16,9 +26,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 10,
   },
 });

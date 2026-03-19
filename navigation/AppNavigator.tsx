@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { AuthProvider, useAuth } from "../contexts/AuthContext";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "../firebase/config";
 
 import LoginScreen from "../features/auth/LoginScreen";
 import HomeScreen from "../features/home/HomeScreen";
@@ -29,7 +32,6 @@ function AuthStack() {
 function MainTabs() {
   return (
     <Tab.Navigator>
-      <Tab.Screen name="Auth" component={AuthStack} />
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Todo" component={TodoScreen} />
       <Tab.Screen name="Stopwatch" component={StopwatchScreen} />
@@ -40,10 +42,18 @@ function MainTabs() {
   );
 }
 
+function RootNavigator() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  return user ? <MainTabs /> : <AuthStack />;
+}
+
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
-      <MainTabs />
-    </NavigationContainer>
+    <AuthProvider>
+      <NavigationContainer>
+        <RootNavigator />
+      </NavigationContainer>
+    </AuthProvider>
   );
 }
