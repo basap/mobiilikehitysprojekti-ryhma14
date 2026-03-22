@@ -1,14 +1,17 @@
 import React from "react";
 import { View, Text, StyleSheet, Button } from "react-native";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function WelcomeScreen({ navigation }: any) {
+  const { loginAsGuest } = useAuth();
+
   return (
     <View>
       <Text>Welcome</Text>
-      <Text>Time so save some time.</Text>
+      <Text>Time to save some time.</Text>
       <Button title="Login" onPress={() => navigation.navigate("Login")} />
       <Button title="Register" onPress={() => navigation.navigate("Register")} />
-      <Button title="login-without-account" onPress={() => navigation.navigate("Home")} />
+      <Button title="Guest login" onPress={loginAsGuest} />
     </View>
   );
 }
