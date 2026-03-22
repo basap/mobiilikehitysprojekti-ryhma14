@@ -43,9 +43,15 @@ function MainTabs() {
 }
 
 function RootNavigator() {
-  const { user, loading } = useAuth();
+  const { user, loading, isGuest } = useAuth();
+
   if (loading) return null;
-  return user ? <MainTabs /> : <AuthStack />;
+
+  if (user || isGuest) {
+    return <MainTabs />;
+  }
+
+  return <AuthStack />;
 }
 
 export default function AppNavigator() {
