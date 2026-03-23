@@ -16,8 +16,8 @@ export const Colors = {
 };
 
 // Spacing and radius
-export const Spacing = { xs: 4, sm: 12, md: 16, lg: 24, xl: 32 };
-export const Radius = { sm: 6, md: 10, pill: 999 };
+export const Spacing = { xs: 4, sm: 16, md: 16, lg: 24, xl: 32 };
+export const Radius = { sm: 6, md: 8, pill: 999 };
 
 // Shadows
 export const Shadow = Platform.select({
@@ -27,11 +27,11 @@ export const Shadow = Platform.select({
 
 // Typography
 export const Typography = StyleSheet.create({
-  screenTitle:    { fontSize: 32, fontStyle: 'italic', fontWeight: '700', color: Colors.primary },
+  screenTitle:    { fontSize: 40, fontStyle: 'italic', fontWeight: '700', color: Colors.primary },
   pageHeading:    { fontSize: 26, fontWeight: '700', color: Colors.text },
   sectionHeading: { fontSize: 20, fontWeight: '600', color: Colors.text },
   body:           { fontSize: 16, color: Colors.text, lineHeight: 22 },
-  subtitle:       { fontSize: 15, color: Colors.textMuted, lineHeight: 20 },
+  subtitle:       { fontSize: 17, color: Colors.textMuted, lineHeight: 20 },
   caption:        { fontSize: 12, color: Colors.textMuted },
   link:           { fontSize: 14, fontWeight: '600', color: Colors.primary, textDecorationLine: 'none' },
   inputLabel:     { fontSize: 12, fontWeight: '500', color: Colors.primary, marginBottom: Spacing.xs },
@@ -61,7 +61,7 @@ export const Input = StyleSheet.create({
 // General layout
 export const Layout = StyleSheet.create({
   screen:     { flex: 1, backgroundColor: Colors.bg },
-  center:     { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.lg },
+  center:     { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.lg, marginBottom: 50 },
   content:    { flex: 1, paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg },
   row:        { flexDirection: 'row', alignItems: 'center' },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -80,7 +80,7 @@ export const Progress = StyleSheet.create({
 });
 
 // Modals
-export const Modal = StyleSheet.create({
+export const ModalStyle = StyleSheet.create({
   backdrop:  { ...StyleSheet.absoluteFillObject, backgroundColor: Colors.overlay, alignItems: 'center', justifyContent: 'center' },
   container: { backgroundColor: '#FFF', borderRadius: Radius.md, padding: Spacing.lg, width: '85%', maxWidth: 340, ...Shadow },
 });
