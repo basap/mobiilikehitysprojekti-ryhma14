@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { Colors, Spacing, Typography, Btn, Input,  ModalStyle } from '../../style/styles';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from "../../firebase/config";
 
 interface ForgotPasswordProps {
   visible: boolean;
@@ -12,9 +14,14 @@ export default function ForgotPasswordModal({ visible, onClose, initialEmail = '
   const [resetEmail, setResetEmail] = useState(initialEmail);
   const [resetSent, setResetSent] = useState(false);
 
-  const handleResetPassword = () => {
-    // Todo: Handle Firebase side of things for resetting password
-    setResetSent(true);
+  const handleResetPassword = async () => {
+    try {
+      await sendPasswordResetEmail(auth, resetEmail.trim());
+
+      setResetSent(true);
+    } catch (error: any) {
+      console.log("Reset password error:", error.message);
+    }
   };
 
   const handleClose = () => {

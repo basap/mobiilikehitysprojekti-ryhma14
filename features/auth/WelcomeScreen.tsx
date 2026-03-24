@@ -1,10 +1,17 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Colors, Spacing, Typography, Btn, Layout } from '../../style/styles';
-import { useAuth } from "../../contexts/AuthContext";
+import { signInAnonymously } from 'firebase/auth';
+import { auth } from "../../firebase/config";
 
 export default function WelcomeScreen({ navigation }: any) {
-  const { loginAsGuest } = useAuth();
+  const handleGuestLogin = async () => {
+    try {
+      await signInAnonymously(auth);
+    } catch (error: any) {
+      console.log("Guest login failed:", error.message);
+    }
+  }
 
   return (
     <View style={Layout.screen}>
@@ -34,7 +41,7 @@ export default function WelcomeScreen({ navigation }: any) {
         <TouchableOpacity
           style={Btn.primary}
           activeOpacity={0.7}
-          onPress={loginAsGuest}
+          onPress={handleGuestLogin}
         >
           <Text style={Btn.primaryText}>Continue as a guest</Text>
         </TouchableOpacity>
