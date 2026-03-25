@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../../contexts/AuthContext";
 import { firestore } from "../../firebase/config";
+import EditEmailModal from "../modals/EditEmailModal";
 import EditUsernameModal from "../modals/EditUsernameModal";
 import { Btn, Card, Colors, Layout, Spacing, Typography } from "../../style/styles";
 
@@ -12,10 +13,12 @@ export default function ProfileScreen() {
     user?.displayName ||
     user?.email?.split("@")[0] ||
     "Guest user";
-  const email = user?.email || "No email added";
+  const fallbackEmail = user?.email || "No email added";
 
   const [username, setUsername] = useState(fallbackUsername);
+  const [email, setEmail] = useState(fallbackEmail);
   const [showEditUsername, setShowEditUsername] = useState(false);
+  const [showEditEmail, setShowEditEmail] = useState(false);
 
   useEffect(() => {
     const loadUsername = async () => {
@@ -42,8 +45,20 @@ export default function ProfileScreen() {
     loadUsername();
   }, [fallbackUsername, user?.uid]);
 
+  useEffect(() => {
+    setEmail(fallbackEmail);
+  }, [fallbackEmail]);
+
   return (
     <View style={Layout.screen}>
+      <EditEmailModal
+        visible={showEditEmail}
+        onClose={() => setShowEditEmail(false)}
+        currentEmail={email}
+        currentUsername={username}
+        onSaved={setEmail}
+      />
+
       <EditUsernameModal
         visible={showEditUsername}
         onClose={() => setShowEditUsername(false)}
@@ -76,7 +91,11 @@ export default function ProfileScreen() {
               <Text style={styles.label}>Email</Text>
               <Text style={styles.value}>{email}</Text>
             </View>
-            <TouchableOpacity activeOpacity={0.7} style={Btn.pill}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={Btn.pill}
+              onPress={() => setShowEditEmail(true)}
+            >
               <Text style={Btn.pillText}>Edit</Text>
             </TouchableOpacity>
           </View>
