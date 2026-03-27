@@ -4,6 +4,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../../contexts/AuthContext";
 import { firestore } from "../../firebase/config";
 import EditEmailModal from "../modals/EditEmailModal";
+import EditPasswordModal from "../modals/EditPasswordModal";
 import EditUsernameModal from "../modals/EditUsernameModal";
 import { Btn, Card, Colors, Layout, Spacing, Typography } from "../../style/styles";
 
@@ -19,6 +20,7 @@ export default function ProfileScreen() {
   const [email, setEmail] = useState(fallbackEmail);
   const [showEditUsername, setShowEditUsername] = useState(false);
   const [showEditEmail, setShowEditEmail] = useState(false);
+  const [showEditPassword, setShowEditPassword] = useState(false);
 
   useEffect(() => {
     const loadUsername = async () => {
@@ -66,6 +68,11 @@ export default function ProfileScreen() {
         onSaved={setUsername}
       />
 
+      <EditPasswordModal
+        visible={showEditPassword}
+        onClose={() => setShowEditPassword(false)}
+      />
+
       <View style={styles.content}>
         <Text style={Typography.screenTitle}>Profile</Text>
 
@@ -107,7 +114,11 @@ export default function ProfileScreen() {
               <Text style={styles.label}>Password</Text>
               <Text style={styles.value}>••••••••••</Text>
             </View>
-            <TouchableOpacity activeOpacity={0.7} style={Btn.pill}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={Btn.pill}
+              onPress={() => setShowEditPassword(true)}
+            >
               <Text style={Btn.pillText}>Edit</Text>
             </TouchableOpacity>
           </View>

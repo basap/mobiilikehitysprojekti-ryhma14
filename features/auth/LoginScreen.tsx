@@ -3,7 +3,8 @@ import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Colors, Spacing, Typography, Btn, Input, Layout } from '../../style/styles';
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebase/config";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, firestore } from "../../firebase/config";
 import { useAuth } from "../../contexts/AuthContext";
 import ForgotPasswordModal from '../modals/ForgotPassword';
 
@@ -42,6 +43,20 @@ export default function LoginScreen() {
         auth, email.trim(), password
       );
 
+      const user = userCredential.user;
+      await user.reload();
+      const updatedUser = auth.currentUser;
+
+      if (updatedUser) {
+        await setDoc(
+          doc(firestore, "users", updatedUser.uid),
+          {
+            email: updatedUser.email,
+          },
+          { merge: true }
+        );
+      }
+
       console.log("Logged in:", userCredential.user.uid);
     } catch (error: any) {
       console.log("Login failed:", error.code);
@@ -58,6 +73,7 @@ export default function LoginScreen() {
           visible={showForgot}
           onClose={() => setShowForgot(false)}
           initialEmail={email}
+          successButtonLabel="Back to Sign In"
         />
 
         {/* Logo placeholder */}

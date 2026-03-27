@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, KeyboardAvoidingView, Platform } from 'react-native';
-import { EmailAuthProvider, reauthenticateWithCredential, updateEmail } from 'firebase/auth';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { auth, firestore } from '../../firebase/config';
+import { EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail } from 'firebase/auth';
+import { auth } from '../../firebase/config';
 import { Btn, Colors, Input, ModalStyle, Spacing, Typography } from '../../style/styles';
 
 interface EditEmailModalProps {
@@ -23,6 +22,7 @@ export default function EditEmailModal({
   const [email, setEmail] = useState(currentEmail);
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [verificationSent, setVerificationSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const user = auth.currentUser;
@@ -38,6 +38,7 @@ export default function EditEmailModal({
       setEmail(currentEmail);
       setPassword('');
       setErrorMessage('');
+      setVerificationSent(false);
     }
   }, [currentEmail, visible]);
 
@@ -45,6 +46,7 @@ export default function EditEmailModal({
     setEmail(currentEmail);
     setPassword('');
     setErrorMessage('');
+    setVerificationSent(false);
     onClose();
   };
 
@@ -82,21 +84,11 @@ export default function EditEmailModal({
 
       const credential = EmailAuthProvider.credential(user.email, password);
       await reauthenticateWithCredential(user, credential);
-      await updateEmail(user, trimmedEmail);
+      await verifyBeforeUpdateEmail(user, trimmedEmail);
 
-      await setDoc(
-        doc(firestore, 'users', user.uid),
-        {
-          uid: user.uid,
-          email: trimmedEmail,
-          username: currentUsername,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-
-      onSaved(trimmedEmail);
-      handleClose();
+      setEmail(trimmedEmail);
+      setPassword('');
+      setVerificationSent(true);
     } catch (error: any) {
       console.log('Edit email error:', error.code || error.message);
 
@@ -130,65 +122,81 @@ export default function EditEmailModal({
       <TouchableOpacity style={ModalStyle.backdrop} activeOpacity={1} onPress={handleClose}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <TouchableOpacity activeOpacity={1} style={ModalStyle.container}>
-            <Text style={Typography.pageHeading}>Edit Email</Text>
-            <View style={{ height: Spacing.xs }} />
-            <Text style={Typography.subtitle}>
-              {canEditEmail
-                ? 'Update your account email and confirm it with your password.'
-                : 'Email editing not available for guest accounts.'}
-            </Text>
-            <View style={{ height: Spacing.lg }} />
-
-            <Text style={Typography.inputLabel}>Email</Text>
-            <TextInput
-              style={Input.field}
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                setErrorMessage('');
-              }}
-              placeholder="example@email.com"
-              placeholderTextColor={Colors.textMuted}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoFocus
-              editable={canEditEmail}
-            />
-
-            <View style={{ height: Spacing.md }} />
-            <Text style={Typography.inputLabel}>Current Password</Text>
-            <TextInput
-              style={Input.field}
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                setErrorMessage('');
-              }}
-              placeholder="Enter your password"
-              placeholderTextColor={Colors.textMuted}
-              secureTextEntry
-              editable={canEditEmail}
-            />
-
-            {errorMessage ? (
+            {!verificationSent ? (
               <>
-                <View style={{ height: Spacing.sm }} />
-                <Text style={{ color: Colors.error }}>{errorMessage}</Text>
+                <Text style={Typography.pageHeading}>Edit Email</Text>
+                <View style={{ height: Spacing.xs }} />
+                <Text style={Typography.subtitle}>
+                  {canEditEmail
+                    ? 'Update your account email and confirm it with your password.'
+                    : 'Email editing is not available for guest accounts.'}
+                </Text>
+                <View style={{ height: Spacing.lg }} />
+
+                <Text style={Typography.inputLabel}>Email</Text>
+                <TextInput
+                  style={Input.field}
+                  value={email}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    setErrorMessage('');
+                  }}
+                  placeholder="example@email.com"
+                  placeholderTextColor={Colors.textMuted}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoFocus
+                  editable={canEditEmail}
+                />
+
+                <View style={{ height: Spacing.md }} />
+                <Text style={Typography.inputLabel}>Current Password</Text>
+                <TextInput
+                  style={Input.field}
+                  value={password}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    setErrorMessage('');
+                  }}
+                  placeholder="Enter your password"
+                  placeholderTextColor={Colors.textMuted}
+                  secureTextEntry
+                  editable={canEditEmail}
+                />
+
+                {errorMessage ? (
+                  <>
+                    <View style={{ height: Spacing.sm }} />
+                    <Text style={{ color: Colors.error }}>{errorMessage}</Text>
+                  </>
+                ) : null}
+
+                <View style={{ height: Spacing.lg }} />
+
+                <TouchableOpacity
+                  style={[Btn.primary, (!canEditEmail || !email.trim()) && { opacity: 0.5 }]}
+                  activeOpacity={0.7}
+                  onPress={handleSave}
+                  disabled={!canEditEmail || !email.trim() || loading}
+                >
+                  <Text style={Btn.primaryText}>
+                    {loading ? 'Saving...' : 'Save email'}
+                  </Text>
+                </TouchableOpacity>
               </>
-            ) : null}
-
-            <View style={{ height: Spacing.lg }} />
-
-            <TouchableOpacity
-              style={[Btn.primary, (!canEditEmail || !email.trim()) && { opacity: 0.5 }]}
-              activeOpacity={0.7}
-              onPress={handleSave}
-              disabled={!canEditEmail || !email.trim() || loading}
-            >
-              <Text style={Btn.primaryText}>
-                {loading ? 'Saving...' : 'Save email'}
-              </Text>
-            </TouchableOpacity>
+            ) : (
+              <>
+                <Text style={[Typography.pageHeading, { textAlign: 'center' }]}>Verify Your New Email</Text>
+                <View style={{ height: Spacing.xs }} />
+                <Text style={[Typography.subtitle, { textAlign: 'center' }]}>
+                  We sent a verification link to {email}. Open that email and click the link to finish changing your address.
+                </Text>
+                <View style={{ height: Spacing.lg }} />
+                <TouchableOpacity style={Btn.primary} activeOpacity={0.7} onPress={handleClose}>
+                  <Text style={Btn.primaryText}>Done</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </TouchableOpacity>
         </KeyboardAvoidingView>
       </TouchableOpacity>

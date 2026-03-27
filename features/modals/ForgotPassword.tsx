@@ -8,11 +8,24 @@ interface ForgotPasswordProps {
   visible: boolean;
   onClose: () => void;
   initialEmail?: string;
+  successButtonLabel?: string;
 }
 
-export default function ForgotPasswordModal({ visible, onClose, initialEmail = '' }: ForgotPasswordProps) {
+export default function ForgotPasswordModal({
+  visible,
+  onClose,
+  initialEmail = '',
+  successButtonLabel = 'Done',
+}: ForgotPasswordProps) {
   const [resetEmail, setResetEmail] = useState(initialEmail);
   const [resetSent, setResetSent] = useState(false);
+
+  React.useEffect(() => {
+    if (visible) {
+      setResetEmail(initialEmail);
+      setResetSent(false);
+    }
+  }, [initialEmail, visible]);
 
   const handleResetPassword = async () => {
     try {
@@ -77,7 +90,7 @@ export default function ForgotPasswordModal({ visible, onClose, initialEmail = '
                 </Text>
                 <View style={{ height: Spacing.lg }} />
                 <TouchableOpacity style={Btn.primary} activeOpacity={0.7} onPress={handleClose}>
-                  <Text style={Btn.primaryText}>Back to Sign In</Text>
+                  <Text style={Btn.primaryText}>{successButtonLabel}</Text>
                 </TouchableOpacity>
               </>
             )}
