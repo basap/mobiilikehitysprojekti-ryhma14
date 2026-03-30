@@ -43,11 +43,11 @@ function MainTabs() {
 }
 
 function RootNavigator() {
-  const { user, loading, isGuest } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) return null;
 
-  if (user || isGuest) {
+  if (user) {
     return <MainTabs />;
   }
 
