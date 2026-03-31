@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import TodoToggle from './TodoToggle';
 import TodoInput from './TodoInput';
@@ -10,6 +10,9 @@ const STORAGE_KEY = 'TODO_LIST_ITEMS';
 
 export default function StatsScreen() {
   const [items, setItems] = useState<Item[]>([]);
+  const deleteItem = (id: string) => {
+    setItems(prev => prev.filter(item => item.id !== id));
+  };
 
   //Load items
   useEffect(() => {
@@ -27,10 +30,15 @@ export default function StatsScreen() {
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
-  const addItem = (name: string) => {
+  const addItem = (name: string, date: Date) => {
     setItems(prev => [
       ...prev,
-      { id: Date.now().toString(), name, done: false },
+      {
+        id: Date.now().toString(),
+        name,
+        done: false,
+        date: date.toISOString(),
+      },
     ]);
   };
 
@@ -52,10 +60,16 @@ export default function StatsScreen() {
         renderItem={({ item }) => (
           <TodoToggle item={item} onToggle={toggleItem} />
         )}
-        renderHiddenItem={() => <View style={styles.rowBack} />}
+        renderHiddenItem={({ item }) => (
+          <View style={styles.rowBack}>
+            <Pressable
+              onPress={() => deleteItem(item.id)} >
+              <Text style={styles.deleteText}>Delete</Text>
+            </Pressable>
+          </View>
+        )}
         rightOpenValue={-75}
         disableRightSwipe
-        disableLeftSwipe
       />
     </View>
   );
@@ -75,10 +89,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   rowBack: {
-    backgroundColor: '#ddd',
+    backgroundColor: 'red',
     flex: 1,
-    alignItems: 'flex-end',
     justifyContent: 'center',
+    alignItems: 'flex-end',
     paddingRight: 20,
+  },
+  deleteText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });

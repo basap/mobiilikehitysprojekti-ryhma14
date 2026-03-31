@@ -11,22 +11,61 @@ export default function TodoToggle({ item, onToggle }: Props) {
   return (
     <Pressable onPress={() => onToggle(item.id)}>
       <View style={styles.rowFront}>
-        <Text style={[item.done && styles.done]}>
+        <Text style={[styles.text, item.done && styles.textDone]}>
           {item.name}
         </Text>
+        {item.date && (
+          <Text style={styles.date}>
+            {new Date(item.date).toDateString()}
+          </Text>
+        )}
+        <View style={[styles.checkbox, item.done && styles.checked]}>
+          {item.done && <View style={styles.inner} />}
+        </View>
       </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  date: {
+    fontSize: 12,
+    color: '#888',
+  },
   rowFront: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f9f9f9',
     borderBottomWidth: 1,
     borderColor: '#eee',
     padding: 16,
   },
-  done: {
-    textDecorationLine: 'line-through',
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderWidth: 2,
+    borderColor: '#333',
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  checked: {
+    backgroundColor: '#333',
+  },
+
+  inner: {
+    width: 10,
+    height: 10,
+    backgroundColor: '#fff',
+  },
+
+  text: {
+    flex: 1,
+    marginRight: 12,
+  },
+
+  textDone: {
+    opacity: 0.5,
   },
 });
