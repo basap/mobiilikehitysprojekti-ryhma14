@@ -1,123 +1,149 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList, Pressable, Alert } from 'react-native';
-import { Input, Spacing, Typography, Btn, Layout, Dropdown } from '../../style/styles';
-import { Timer } from '../utils/Timer';
-
-// TODO: replace with real data from storage
-const savedActivities = ['Running', 'Reading', 'Cooking', 'Coding', 'Stretching'];
+import React, { useState, useRef, useEffect } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, TextInput } from "react-native";
+import AsyncStorage from  "@react-native-async-storage/async-storage";
+import { firestore } from "../../firebase/config";
+import { collection, getDocs } from "firebase/firestore";
 
 export default function StopwatchScreen() {
-  const [display, setDisplay] = useState('00.00,00');
-  const [query, setQuery] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
-  const [selected, setSelected] = useState('');
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const StartTimeRef = useRef<number>(0);
+  const [activityTitles, setActivityTitles] = useState<string[]>([]);
+  const [title, setTitle] = useState("");
 
-  const timerRef = useRef(new Timer((ms) => setDisplay(Timer.format(ms))));
-  const inputRef = useRef<TextInput>(null);
+  const formatTime = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    const centiseconds = Math.floor((ms % 1000) / 10);
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+
+    return `${pad(minutes)}:${pad(seconds)}.${pad (centiseconds)}`
+  };
+
+  const handleStart = async () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    const startTime = Date.now() - elapsedMs;
+    StartTimeRef.current = startTime;
+
+    await AsyncStorage.setItem("startTime", String(startTime));
+    await AsyncStorage.setItem("isRunning", "true");
+
+    intervalRef.current = setInterval(() => {
+      setElapsedMs(Date.now() - StartTimeRef.current);
+    }, 10);
+    setIsRunning(true);
+  };
+
+  const handleStop = async () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setIsRunning(false);
+    await AsyncStorage.setItem("isRunning", "false");
+    await AsyncStorage.setItem("elapsedMs", String(elapsedMs));
+  };
+
+  const handleReset = async () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setIsRunning(false);
+    setElapsedMs(0);
+    await AsyncStorage.removeItem("startTime");
+    await AsyncStorage.removeItem("elapsedMs"); 
+    await AsyncStorage.setItem("isRunning", "false");
+  };
 
   useEffect(() => {
-    return () => timerRef.current.destroy();
+    const restoreTimer = async () => {
+      const savedStartTime = await AsyncStorage.getItem("startTime");
+      const savedIsRunning = await AsyncStorage.getItem("isRunning");
+
+      if (savedIsRunning === "true" && savedStartTime !== null) {
+        const startTime = Number(savedStartTime);
+        StartTimeRef.current = startTime;
+
+        intervalRef.current = setInterval(() => {
+          setElapsedMs(Date.now() - StartTimeRef.current);
+        }, 10)
+        setIsRunning(true);
+      } else if (savedIsRunning === "false") {
+        const savedElapsed = await AsyncStorage.getItem("elapsedMs");
+        if (savedElapsed !== null) {
+          setElapsedMs(Number(savedElapsed));
+        }
+      }
+    };
+    restoreTimer();
   }, []);
 
-  const filtered = savedActivities.filter((a) =>
-    a.toLowerCase().includes(query.toLowerCase())
-  );
+  const fetchTitles = async () => {
+  try {
+    const snapshot = await getDocs(collection(firestore, "activities"));
+    const titles = snapshot.docs.map(doc => doc.data().title as string);
+    const uniqueTitles = [...new Set(titles)]; // removes duplicates
+    setActivityTitles(uniqueTitles);
+  } catch (error) {
+    console.error("Error fetching titles:", error);
+  }
+};
 
-  const handleSelect = (activity: string) => {
-    setSelected(activity);
-    setQuery(activity);
-    hideDropdown();
-  };
-
-  const toggleTimer = () => {
-    if (isRunning) {
-      timerRef.current.pause();
-      setIsRunning(false);
-    } else if (selected.length > 0) {
-      timerRef.current.start();
-      setIsRunning(true);
-    } else {
-      Alert.alert('Error', 'You must select an activity before starting timer!');
-    }
-  };
-
-  const resetTimer = () => {
-    timerRef.current.reset();
-    setIsRunning(false);
-    setSelected('');
-    setQuery('');
-  };
-
-  const hideDropdown = () => {
-    inputRef.current?.blur();
-    setShowDropdown(false);
-  };
+useEffect(() => {
+  fetchTitles();
+}, []);
 
   return (
-    <Pressable onPress={hideDropdown} style={Layout.screen}>
-      <View style={[Layout.center, { overflow: 'visible' }]}>
-        <Text style={Typography.bigTitle}>Stopwatch</Text>
+    <View style={styles.container}>
+      <Text style={styles.stopwatch}>{formatTime(elapsedMs)}</Text>
+    
+      <View style={styles.buttonRow}>
 
-        <View style={{ height: Spacing.xl }} />
+        <TouchableOpacity style={[styles.button, isRunning && styles.buttonDisabled]} onPress={handleStart} disabled={isRunning}>
+          <Text style={styles.buttonText}>Start</Text>
+        </TouchableOpacity>
 
-        <View style={[Dropdown.container, { width: '80%' }]}>
-          <TextInput
-            ref={inputRef}
-            style={[
-              Input.field,
-              showDropdown && filtered.length > 0 && {
-                borderBottomLeftRadius: 0,
-                borderBottomRightRadius: 0,
-              },
-            ]}
-            placeholder="Pick activity name for timer"
-            value={query}
-            onChangeText={(text) => {
-              setQuery(text);
-              setSelected('');
-              setShowDropdown(true);
-            }}
-            onPressIn={() => setShowDropdown(true)}
-          />
+        <TouchableOpacity style={[styles.button, !isRunning && styles.buttonDisabled]} onPress={handleStop} disabled={!isRunning}>
+          <Text style={styles.buttonText}>Stop</Text>
+        </TouchableOpacity>
 
-          {showDropdown && filtered.length > 0 && (
-            <View style={Dropdown.list}>
-              <FlatList
-                data={filtered}
-                keyExtractor={(item) => item}
-                keyboardShouldPersistTaps="handled"
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={Dropdown.item}
-                    onPress={() => handleSelect(item)}
-                  >
-                    <Text style={Dropdown.itemText}>{item}</Text>
-                  </TouchableOpacity>
-                )}
-              />
-            </View>
-          )}
-        </View>
+        <TouchableOpacity style={styles.button} onPress={handleReset}>
+          <Text style={styles.buttonText}>Reset</Text>
+        </TouchableOpacity>
 
-        <View style={{ height: Spacing.lg, zIndex: 1 }} />
-
-        <View style={{ zIndex: 1, alignItems: 'center' }}>
-          <Text style={Typography.timer}>{display}</Text>
-
-          <View style={{ height: Spacing.xl }} />
-
-          <TouchableOpacity
-            style={Btn.pill}
-            activeOpacity={0.7}
-            onPress={toggleTimer}
-          >
-            <Text style={Btn.pillText}>
-              {isRunning ? 'Pause stopwatch' : 'Start stopwatch'}
-            </Text>
-          </TouchableOpacity>
-        </View>
       </View>
-    </Pressable>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 10,
+  },
+  stopwatch: {
+    fontSize: 48,
+    fontWeight: "bold",
+    marginBottom: 20,
+    letterSpacing: 2,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  button: {
+    backgroundColor: "#333",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+  buttonDisabled: {
+    backgroundColor: "#888",
+  },
+});
