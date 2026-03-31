@@ -1,11 +1,10 @@
 import React, { createContext, useContext, useEffect, useState} from "react";
-import { onAuthStateChanged, User, signOut } from "firebase/auth";
+import { onAuthStateChanged, User, signOut, signInAnonymously } from "firebase/auth";
 import { auth } from "../firebase/config";
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  isGuest: boolean;
   loginAsGuest: () => void;
   logout: () => void;
 };
@@ -13,7 +12,6 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  isGuest: false,
   loginAsGuest: () => {},
   logout: () => {},
 });
@@ -21,7 +19,6 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -32,20 +29,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return unsubscribe;
   }, []);
 
-  const loginAsGuest = () => {
-    setIsGuest(true);
+  const loginAsGuest = async () => {
+    try {
+      await signInAnonymously(auth);
+    } catch (error: any) {
+      console.log("Guest login failed:", error.message);
+    }
   };
 
   const logout = async () => {
-    setIsGuest(false);
-    if (user) {
+    try {
       await signOut(auth);
+    } catch (error: any) {
+      console.log("Logout error:", error.message);
     }
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, isGuest, loginAsGuest, logout }}
+      value={{ user, loading, loginAsGuest, logout }}
     >
       {children}
     </AuthContext.Provider>

@@ -12,11 +12,39 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [agreed, setAgreed] = useState(false);
   const navigation = useNavigation();
+  const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const getErrorMessage = (errorCode: string) => {
+    switch (errorCode) {
+      case "auth/email-already-in-use":
+        return "Email is already in use";
+      case "auth/invalid-email":
+        return "Invalid email address";
+      case "auth/weak-password":
+        return "Password should be at least 6 characters";
+      default:
+        return "Something went wrong. Please try again";
+    }
+  };
 
   const handleRegister = async () => {
+    if (!username || !email || !password) {
+      setErrorMessage("Please fill all fields");
+      return;
+    }
+
+    if (!agreed) {
+      setErrorMessage("You must accept the terms");
+      return;
+    }
+
     try {
+      setLoading(true);
+      setErrorMessage('');
+
       const userCredential = await createUserWithEmailAndPassword(
-        auth, email, password
+        auth, email.trim(), password
       );
 
       const user = userCredential.user;
@@ -32,9 +60,12 @@ export default function RegisterScreen() {
         createdAt: serverTimestamp(),
       });
 
-      console.log("User created:", userCredential.user.uid);
+      console.log("User created:", user.uid);
     } catch (error: any) {
-      console.log("Register failed:", error.message);
+      console.log("Register failed:", error.code);
+      setErrorMessage(getErrorMessage(error.code));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,7 +80,10 @@ export default function RegisterScreen() {
           <TextInput
             style={Input.field}
             value={username}
-            onChangeText={setUsername}
+            onChangeText={(text) => {
+              setUsername(text);
+              setErrorMessage('');
+            }}
             placeholder="Username"
             placeholderTextColor={Colors.textMuted}
           />
@@ -59,7 +93,10 @@ export default function RegisterScreen() {
           <TextInput
             style={Input.field}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              setErrorMessage('');
+            }}
             placeholder="Email Address"
             placeholderTextColor={Colors.textMuted}
             keyboardType="email-address"
@@ -70,7 +107,10 @@ export default function RegisterScreen() {
           <TextInput
             style={Input.field}
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => {
+              setPassword(text);
+              setErrorMessage('');
+            }}
             placeholder="Your password"
             placeholderTextColor={Colors.textMuted}
             secureTextEntry
@@ -109,12 +149,22 @@ export default function RegisterScreen() {
 
         <View style={{ height: Spacing.lg }} />
 
+        {errorMessage ? (
+          <>
+            <View style={{ height: Spacing.sm }} />
+            <Text style={{ color: 'red' }}>{errorMessage}</Text>
+          </>
+        ) : null}
+
         <TouchableOpacity
           style={[Btn.primary, !agreed && { opacity: 0.5 }]}
           activeOpacity={0.7}
-          disabled={!agreed}
+          disabled={!agreed || loading}
+          onPress={handleRegister}
         >
-          <Text style={Btn.primaryText} onPress={handleRegister}>Register</Text>
+          <Text style={Btn.primaryText}>
+            {loading ? "Creating account..." : "Register"}
+          </Text>
         </TouchableOpacity>
       </View>
 

@@ -28,6 +28,7 @@ export const Shadow = Platform.select({
 // Typography
 export const Typography = StyleSheet.create({
   screenTitle:    { fontSize: 40, fontStyle: 'italic', fontWeight: '700', color: Colors.primary },
+  bigTitle:       { fontSize: 52, fontStyle: 'italic', fontWeight: '700', color: Colors.primary },
   pageHeading:    { fontSize: 26, fontWeight: '700', color: Colors.text },
   sectionHeading: { fontSize: 20, fontWeight: '600', color: Colors.text },
   body:           { fontSize: 16, color: Colors.text, lineHeight: 22 },
@@ -35,6 +36,7 @@ export const Typography = StyleSheet.create({
   caption:        { fontSize: 12, color: Colors.textMuted },
   link:           { fontSize: 14, fontWeight: '600', color: Colors.primary, textDecorationLine: 'none' },
   inputLabel:     { fontSize: 12, fontWeight: '500', color: Colors.primary, marginBottom: Spacing.xs },
+  timer:          { fontSize: 44, fontWeight: '700', color: Colors.text }
 });
 
 // Buttons
@@ -43,8 +45,8 @@ export const Btn = StyleSheet.create({
   primaryText:  { color: '#FFF', fontSize: 16, fontWeight: '600' },
   outline:      { backgroundColor: 'transparent', paddingVertical: 14, paddingHorizontal: Spacing.lg, borderRadius: Radius.pill, borderWidth: 1.5, borderColor: Colors.primary, alignItems: 'center', minWidth: 200 },
   outlineText:  { color: Colors.primary, fontSize: 16, fontWeight: '600' },
-  pill:         { backgroundColor: 'transparent', paddingVertical: 8, paddingHorizontal: Spacing.md, borderRadius: Radius.pill, borderWidth: 1.5, borderColor: Colors.primary, alignItems: 'center' },
-  pillText:     { color: Colors.primary, fontSize: 14, fontWeight: '600' },
+  pill:         { backgroundColor: 'transparent', paddingVertical: 8, paddingHorizontal: Spacing.lg, borderRadius: Radius.pill, borderWidth: 1.5, borderColor: '#000000', alignItems: 'center' },
+  pillText:     { color: Colors.primary, fontSize: 24, fontWeight: '600' },
   textBtn:      { padding: Spacing.sm },
   textBtnLabel: { color: Colors.primary, fontSize: 14, fontWeight: '600' },
 });
@@ -83,4 +85,53 @@ export const Progress = StyleSheet.create({
 export const ModalStyle = StyleSheet.create({
   backdrop:  { ...StyleSheet.absoluteFillObject, backgroundColor: Colors.overlay, alignItems: 'center', justifyContent: 'center' },
   container: { backgroundColor: '#FFF', borderRadius: Radius.md, padding: Spacing.lg, width: '85%', maxWidth: 340, ...Shadow },
+});
+
+// Dropdown / Autocomplete
+export const Dropdown = StyleSheet.create({
+  container: {
+    position: 'relative',
+    zIndex: 10,
+  },
+  list: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
+    maxHeight: 200,
+    ...Shadow,
+  },
+  item: {
+    paddingVertical: 12,
+    paddingHorizontal: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  itemText: {
+    fontSize: 16,
+    color: Colors.text,
+  },
+  highlightedItem: {
+    backgroundColor: Colors.primaryLight,
+  },
+  highlightedText: {
+    color: Colors.primaryDark,
+    fontWeight: '600',
+  },
+  empty: {
+    paddingVertical: 16,
+    paddingHorizontal: Spacing.md,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+  },
 });
