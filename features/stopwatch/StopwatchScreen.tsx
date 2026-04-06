@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { firestore } from "../../firebase/config";
@@ -6,6 +7,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { Typography, Btn, Layout, Colors } from '../../style/styles';
 
 export default function StopwatchScreen() {
+  const navigation = useNavigation();
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -82,6 +84,14 @@ export default function StopwatchScreen() {
 
   return (
     <View style={Layout.center}>
+      <TouchableOpacity
+        style={styles.homeButton}
+        onPress={() => navigation.navigate("Home" as never)}
+        activeOpacity={0.7}
+      >
+        <Text style={Btn.outlineText}>Home</Text>
+      </TouchableOpacity>
+
       <Text style={Typography.timer}>{formatTime(elapsedMs)}</Text>
 
       <View style={styles.buttonRow}>
@@ -110,6 +120,13 @@ export default function StopwatchScreen() {
 }
 
 const styles = StyleSheet.create({
+  homeButton: {
+    ...Btn.outline,
+    minWidth: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 24,
+  },
   buttonRow: {
     flexDirection: "row",
     gap: 12,
