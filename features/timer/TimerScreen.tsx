@@ -95,6 +95,7 @@ export default function TimerScreen() {
   return (
     <Pressable onPress={hideDropdown} style={Layout.screen}>
       <View style={[Layout.center, { overflow: 'visible' }]}>
+        {/*
         <TouchableOpacity
           style={[Btn.outline, { minWidth: 0, paddingVertical: 10, paddingHorizontal: 16, marginBottom: Spacing.lg }]}
           activeOpacity={0.7}
@@ -102,7 +103,7 @@ export default function TimerScreen() {
         >
           <Text style={Btn.outlineText}>Home</Text>
         </TouchableOpacity>
-
+        */}
         <Text style={Typography.bigTitle}>Timer</Text>
 
         <View style={{ height: Spacing.sm, zIndex: 1 }} />

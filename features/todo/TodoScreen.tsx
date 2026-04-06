@@ -57,9 +57,11 @@ export default function StatsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Todo list</Text>
+        {/*
         <Pressable style={styles.homeButton} onPress={() => navigation.navigate('Home' as never)}>
           <Text style={Btn.outlineText}>Home</Text>
         </Pressable>
+        */}
       </View>
       <TodoInput onAdd={addItem}/>
       <SwipeListView

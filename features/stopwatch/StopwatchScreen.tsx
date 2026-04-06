@@ -84,6 +84,7 @@ export default function StopwatchScreen() {
 
   return (
     <View style={Layout.center}>
+      {/*
       <TouchableOpacity
         style={styles.homeButton}
         onPress={() => navigation.navigate("Home" as never)}
@@ -91,7 +92,7 @@ export default function StopwatchScreen() {
       >
         <Text style={Btn.outlineText}>Home</Text>
       </TouchableOpacity>
-
+      */}
       <Text style={Typography.timer}>{formatTime(elapsedMs)}</Text>
 
       <View style={styles.buttonRow}>

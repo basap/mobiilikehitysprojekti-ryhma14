@@ -78,6 +78,7 @@ export default function ProfileScreen() {
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={Typography.screenTitle}>Profile</Text>
+          {/*
           <TouchableOpacity
             activeOpacity={0.7}
             style={styles.homeButton}
@@ -85,6 +86,7 @@ export default function ProfileScreen() {
           >
             <Text style={Btn.outlineText}>Home</Text>
           </TouchableOpacity>
+          */}
         </View>
 
         <View style={styles.card}>

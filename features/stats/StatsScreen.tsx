@@ -9,7 +9,7 @@ export default function StatsScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Stats page</Text>
-
+      {/*
       <TouchableOpacity
         style={styles.homeButton}
         onPress={() => navigation.navigate("Home" as never)}
@@ -17,7 +17,7 @@ export default function StatsScreen() {
       >
         <Text style={Btn.outlineText}>Home</Text>
       </TouchableOpacity>
-
+      */}
       <Text>Stats page</Text>
     </View>
   );
