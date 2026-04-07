@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { View, Text, TouchableOpacity, TextInput, FlatList, Pressable } from 'react-native';
 import { Input, Spacing, Typography, Btn, Layout, Dropdown } from '../../style/styles';
 import { Timer } from '../utils/Timer';
@@ -18,6 +19,7 @@ const formatCountdown = (ms: number): string => {
 };
 
 export default function TimerScreen() {
+  const navigation = useNavigation();
   const [durationMs, setDurationMs] = useState(0);
   const [display, setDisplay] = useState('00:00');
   const [query, setQuery] = useState('');
@@ -93,6 +95,15 @@ export default function TimerScreen() {
   return (
     <Pressable onPress={hideDropdown} style={Layout.screen}>
       <View style={[Layout.center, { overflow: 'visible' }]}>
+        {/*
+        <TouchableOpacity
+          style={[Btn.outline, { minWidth: 0, paddingVertical: 10, paddingHorizontal: 16, marginBottom: Spacing.lg }]}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('Home' as never)}
+        >
+          <Text style={Btn.outlineText}>Home</Text>
+        </TouchableOpacity>
+        */}
         <Text style={Typography.bigTitle}>Timer</Text>
 
         <View style={{ height: Spacing.sm, zIndex: 1 }} />

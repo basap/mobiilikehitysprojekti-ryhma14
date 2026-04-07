@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigation } from "@react-navigation/native";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../../contexts/AuthContext";
@@ -9,6 +10,7 @@ import EditUsernameModal from "../modals/EditUsernameModal";
 import { Btn, Card, Colors, Layout, Spacing, Typography } from "../../style/styles";
 
 export default function ProfileScreen() {
+  const navigation = useNavigation();
   const { user, logout } = useAuth();
   const fallbackUsername =
     user?.displayName ||
@@ -74,7 +76,18 @@ export default function ProfileScreen() {
       />
 
       <View style={styles.content}>
-        <Text style={Typography.screenTitle}>Profile</Text>
+        <View style={styles.header}>
+          <Text style={Typography.screenTitle}>Profile</Text>
+          {/*
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.homeButton}
+            onPress={() => navigation.navigate("Home" as never)}
+          >
+            <Text style={Btn.outlineText}>Home</Text>
+          </TouchableOpacity>
+          */}
+        </View>
 
         <View style={styles.card}>
           <View style={styles.row}>
@@ -137,6 +150,17 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.xl,
+  },
+  header: {
+    ...Layout.rowBetween,
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  homeButton: {
+    ...Btn.outline,
+    minWidth: 0,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   card: {
     ...Card.base,
