@@ -4,10 +4,10 @@ import { Text, TouchableOpacity, View, StyleSheet, } from "react-native";
 import { Btn, Card, Colors, Layout, Radius, Spacing, Typography, } from "../../style/styles";
 
 const tasks = [
-  "aaa",
-  "bbb",
-  "ccc",
-  "ddd",
+  { name: "aaa", deadline: "Due Apr 14" },
+  { name: "bbb", deadline: "Due Apr 16" },
+  { name: "ccc", deadline: "Due Apr 18" },
+  { name: "ddd", deadline: "Due Apr 21" },
 ];
 
 const actions = [
@@ -37,16 +37,21 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.taskCard}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate("Todo" as never)}
+          style={styles.taskCard}
+        >
           {tasks.map((task, index) => (
-            <View key={task}>
+            <View key={task.name}>
               <View style={styles.taskRow}>
-                <Text style={Typography.body}>{task}</Text>
+                <Text style={Typography.body}>{task.name}</Text>
+                <Text style={styles.deadlineText}>{task.deadline}</Text>
               </View>
               {index < tasks.length - 1 ? <View style={styles.divider} /> : null}
             </View>
           ))}
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.buttonGroup}>
           {actions.map((action) => (
@@ -104,8 +109,15 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   taskRow: {
+    ...Layout.rowBetween,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
+    gap: Spacing.sm,
+  },
+  deadlineText: {
+    color: Colors.textMuted,
+    fontSize: 13,
+    fontWeight: "600",
   },
   divider: {
     height: 1,
