@@ -7,31 +7,71 @@ import TodoToggle from './TodoToggle';
 import TodoInput from './TodoInput';
 import { Item } from './TodoItem';
 import { Btn, Colors } from '../../style/styles';
+import { firestore, auth } from "../../firebase/config";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+
 
 const STORAGE_KEY = 'TODO_LIST_ITEMS';
 
 export default function StatsScreen() {
   const navigation = useNavigation();
   const [items, setItems] = useState<Item[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const deleteItem = (id: string) => {
     setItems(prev => prev.filter(item => item.id !== id));
   };
 
   //Load items
-  useEffect(() => {
+ /* useEffect(() => {
     (async () => {
       try {
         const json = await AsyncStorage.getItem(STORAGE_KEY);
         if (json) setItems(JSON.parse(json));
-       } catch (e) {
-        //todo error
-       }
+      } catch (e) {
+        //todo error 
+      }
+      setLoaded(true);
     })();
+  }, []); */
+  useEffect(() => {
+    const load = async () => {
+      const user = auth.currentUser;
+
+      try {
+	      if (user?.isAnonymous) {	//guest
+          const json = await AsyncStorage.getItem(STORAGE_KEY);
+          if (json) {
+            setItems(JSON.parse(json));
+          }
+	      } else if (user) { 		    //logged in
+          const docRef = doc(firestore, "users", user.uid, "todos", "list");
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data?.items) {
+              setItems(data.items);
+            }
+          }
+        }
+      } catch (e) {
+        console.log("Failed to load todos", e);
+      } finally {
+        setLoaded(true);
+      }
+    };
+
+    load();
   }, []);
+
   //Save items
   useEffect(() => {
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+    if (!loaded) return;
+    const timeout = setTimeout(() => {
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      handleSave();
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [items, loaded]);
 
   const addItem = (name: string, date: Date) => {
     setItems(prev => [
@@ -52,6 +92,25 @@ export default function StatsScreen() {
       )
     );
   };
+
+  async function handleSave(): Promise<void> {
+    const user = auth.currentUser;
+    if (user?.isAnonymous || !user) {
+      console.log("No user logged in");
+      return;
+    }
+    try {
+      const docRef = doc(firestore, "users", user.uid, "todos", "list");
+      await setDoc(docRef, {
+        items: items,
+        updatedAt: serverTimestamp(),
+      });
+      console.log("Todos saved successfully!");
+    } catch (err) {
+      console.error("Failed to save todos", err);
+    }
+  }
+
 
   return (
     <View style={styles.container}>

@@ -35,10 +35,10 @@ export default function TodoInput({ onAdd }: Props) {
                 style={styles.input}
                 value={value}
                 onChangeText={setValue}
-                placeholder="Pick todo title"
+                placeholder="Give todo title"
               />
               <View style={styles.dateView}>
-                <Button title="Pick Date" onPress={() => setShowPicker(true)} />
+                <Button title="Pick last Date" onPress={() => setShowPicker(true)} />
                 <Text style={styles.datePicker}>
                   {date.toDateString()} 
                 </Text>
