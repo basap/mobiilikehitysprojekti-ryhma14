@@ -12,6 +12,7 @@ import StopwatchScreen from "../features/stopwatch/StopwatchScreen";
 import TimerScreen from "../features/timer/TimerScreen";
 import ProfileScreen from "../features/profile/ProfileScreen";
 import TodoScreen from "../features/todo/TodoScreen";
+import ArchiveScreen from "../features/todo/ArchiveScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +31,7 @@ function MainStack() {
     <Stack.Navigator initialRouteName="Home">
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Todo" component={TodoScreen} />
+      <Stack.Screen name="Archive" component={ArchiveScreen} />
       <Stack.Screen name="Stopwatch" component={StopwatchScreen} />
       <Stack.Screen name="Timer" component={TimerScreen} />
       <Stack.Screen name="Stats" component={StatsScreen} />

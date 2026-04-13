@@ -11,16 +11,16 @@ export default function TodoToggle({ item, onToggle }: Props) {
   return (
     <Pressable onPress={() => onToggle(item.id)}>
       <View style={styles.rowFront}>
-        <Text style={[styles.text, item.done && styles.textDone]}>
+        <Text style={[styles.text, item.isDone && styles.textDone]}>
           {item.name}
         </Text>
-        {item.date && (
+        {item.deadline && (
           <Text style={styles.date}>
-            {new Date(item.date).toDateString()}
+            {new Date(item.deadline).toDateString()}
           </Text>
         )}
-        <View style={[styles.checkbox, item.done && styles.checked]}>
-          {item.done && <View style={styles.inner} />}
+        <View style={[styles.checkbox, item.isDone && styles.checked]}>
+          {item.isDone && <View style={styles.inner} />}
         </View>
       </View>
     </Pressable>

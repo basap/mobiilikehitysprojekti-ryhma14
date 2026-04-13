@@ -1,14 +1,10 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { Text, TouchableOpacity, View, StyleSheet, } from "react-native";
+import { useAuth } from "../../contexts/AuthContext";
 import { Btn, Card, Colors, Layout, Radius, Spacing, Typography, } from "../../style/styles";
-
-const tasks = [
-  { name: "aaa", deadline: "Due Apr 14" },
-  { name: "bbb", deadline: "Due Apr 16" },
-  { name: "ccc", deadline: "Due Apr 18" },
-  { name: "ddd", deadline: "Due Apr 21" },
-];
+import { Item } from "../todo/TodoItem";
+import { ensureTodoListDocument, subscribeToTodos } from "../todo/todoStore";
 
 const actions = [
   { label: "Timer", icon: "⌛️", route: "Timer" },
@@ -19,6 +15,55 @@ const actions = [
 
 export default function HomeScreen() {
   const navigation = useNavigation();
+  const { user } = useAuth();
+  const [tasks, setTasks] = useState<Item[]>([]);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setTasks([]);
+      return;
+    }
+
+    ensureTodoListDocument(user.uid).catch((error) => {
+      console.log("Create todo list error:", error);
+    });
+
+    const unsubscribe = subscribeToTodos(user.uid, (items) => {
+      setTasks(items.filter((item) => !item.isArchived));
+    });
+
+    return unsubscribe;
+  }, [user?.uid]);
+
+  const visibleTasks = useMemo(() => {
+    return [...tasks]
+      .sort((a, b) => {
+        const first = a.deadline ? new Date(a.deadline).getTime() : Number.MAX_SAFE_INTEGER;
+        const second = b.deadline ? new Date(b.deadline).getTime() : Number.MAX_SAFE_INTEGER;
+        return first - second;
+      })
+      .slice(0, 4);
+  }, [tasks]);
+
+  const formatDeadline = (deadline?: string) => {
+    if (!deadline) {
+      return "No deadline";
+    }
+
+    const parsedDate = new Date(deadline);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "No deadline";
+    }
+
+    return parsedDate.toLocaleString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <View style={Layout.screen}>
@@ -42,15 +87,22 @@ export default function HomeScreen() {
           onPress={() => navigation.navigate("Todo" as never)}
           style={styles.taskCard}
         >
-          {tasks.map((task, index) => (
-            <View key={task.name}>
-              <View style={styles.taskRow}>
-                <Text style={Typography.body}>{task.name}</Text>
-                <Text style={styles.deadlineText}>{task.deadline}</Text>
+          {visibleTasks.length > 0 ? (
+            visibleTasks.map((task, index) => (
+              <View key={task.id}>
+                <View style={styles.taskRow}>
+                  <Text style={Typography.body}>{task.name}</Text>
+                  <Text style={styles.deadlineText}>{formatDeadline(task.deadline)}</Text>
+                </View>
+                {index < visibleTasks.length - 1 ? <View style={styles.divider} /> : null}
               </View>
-              {index < tasks.length - 1 ? <View style={styles.divider} /> : null}
+            ))
+          ) : (
+            <View style={styles.emptyTaskState}>
+              <Text style={Typography.body}>No todos yet.</Text>
+              <Text style={styles.deadlineText}>Your next tasks will appear here.</Text>
             </View>
-          ))}
+          )}
         </TouchableOpacity>
 
         <View style={styles.buttonGroup}>
@@ -123,6 +175,11 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: Colors.borderLight,
     marginHorizontal: Spacing.md,
+  },
+  emptyTaskState: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    gap: Spacing.xs,
   },
   buttonGroup: {
     marginTop: Spacing.lg,
