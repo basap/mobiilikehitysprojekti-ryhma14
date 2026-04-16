@@ -1,17 +1,23 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { firestore } from "../../firebase/config";
-import { collection, getDocs, addDoc } from "firebase/firestore";
-import { Typography, Btn, Layout, Colors, Input, Dropdown } from '../../style/styles';
+import { useAuth } from "../../contexts/AuthContext";
+import { Typography, Btn, Layout, Colors, Dropdown } from "../../style/styles";
+import { Item } from "../todo/TodoItem";
+import { addTimeSpentToTodo, ensureTodoListDocument, subscribeToTodos } from "../todo/todoStore";
+
+const STORAGE_SELECTED_TASK_ID = "stopwatchSelectedTaskId";
+const STORAGE_SELECTED_TASK_NAME = "stopwatchSelectedTaskName";
 
 export default function StopwatchScreen() {
+  const { user } = useAuth();
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const StartTimeRef = useRef<number>(0);
-  const [activityTitles, setActivityTitles] = useState<string[]>([]);
-  const [title, setTitle] = useState("");
+  const [tasks, setTasks] = useState<Item[]>([]);
+  const [selectedTaskId, setSelectedTaskId] = useState("");
+  const [selectedTaskName, setSelectedTaskName] = useState("");
   const [showList, setShowList] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
@@ -25,11 +31,17 @@ export default function StopwatchScreen() {
   };
 
   const handleStart = async () => {
+    if (!selectedTaskId) {
+      return;
+    }
+
     if (intervalRef.current) clearInterval(intervalRef.current);
     const startTime = Date.now() - elapsedMs;
     StartTimeRef.current = startTime;
     await AsyncStorage.setItem("startTime", String(startTime));
     await AsyncStorage.setItem("isRunning", "true");
+    await AsyncStorage.setItem(STORAGE_SELECTED_TASK_ID, selectedTaskId);
+    await AsyncStorage.setItem(STORAGE_SELECTED_TASK_NAME, selectedTaskName);
     intervalRef.current = setInterval(() => {
       setElapsedMs(Date.now() - StartTimeRef.current);
     }, 10);
@@ -48,46 +60,31 @@ export default function StopwatchScreen() {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setIsRunning(false);
     setElapsedMs(0);
-    setTitle("");
     setSaved(false);
     setShowList(false);
+    setSelectedTaskId("");
+    setSelectedTaskName("");
     await AsyncStorage.removeItem("startTime");
     await AsyncStorage.removeItem("elapsedMs");
     await AsyncStorage.setItem("isRunning", "false");
+    await AsyncStorage.removeItem(STORAGE_SELECTED_TASK_ID);
+    await AsyncStorage.removeItem(STORAGE_SELECTED_TASK_NAME);
   };
 
   const handleSave = async () => {
-    if (!title.trim()) return;
+    if (!user?.uid || !selectedTaskId || elapsedMs <= 0) {
+      return;
+    }
+
     try {
-      await addDoc(collection(firestore, "activities"), {
-        title: title.trim(),
-        durationMs: elapsedMs,
-        createdAt: new Date(),
-      });
-      fetchTitles();
-      setSaveMessage("✓ Saved!");
+      await addTimeSpentToTodo(user.uid, selectedTaskId, elapsedMs);
+      setSaveMessage("âœ“ Saved!");
       setTimeout(() => setSaveMessage(""), 2000);
       handleReset();
     } catch (error) {
       console.error("Saving failed:", error);
-      setSaveMessage("✗ Saving failed");
+      setSaveMessage("âœ— Saving failed");
       setTimeout(() => setSaveMessage(""), 2000);
-    }
-  };
-
-const fetchTitles = async () => {
-    try {
-      const snapshot = await getDocs(collection(firestore, "activities"));
-      const titles = snapshot.docs.map(doc => doc.data().title as string);
-      const uniqueTitles = [...new Set(titles)];
-
-      const sortedTitles = uniqueTitles.sort((a, b) => 
-        a.localeCompare(b, undefined, { sensitivity: 'base' })
-      );
-
-      setActivityTitles(sortedTitles);
-    } catch (error) {
-      console.error("Error fetching titles:", error);
     }
   };
 
@@ -95,6 +92,18 @@ const fetchTitles = async () => {
     const restoreTimer = async () => {
       const savedStartTime = await AsyncStorage.getItem("startTime");
       const savedIsRunning = await AsyncStorage.getItem("isRunning");
+      const savedElapsed = await AsyncStorage.getItem("elapsedMs");
+      const savedTaskId = await AsyncStorage.getItem(STORAGE_SELECTED_TASK_ID);
+      const savedTaskName = await AsyncStorage.getItem(STORAGE_SELECTED_TASK_NAME);
+
+      if (savedTaskId) {
+        setSelectedTaskId(savedTaskId);
+      }
+
+      if (savedTaskName) {
+        setSelectedTaskName(savedTaskName);
+      }
+
       if (savedIsRunning === "true" && savedStartTime !== null) {
         const startTime = Number(savedStartTime);
         StartTimeRef.current = startTime;
@@ -102,101 +111,115 @@ const fetchTitles = async () => {
           setElapsedMs(Date.now() - StartTimeRef.current);
         }, 10);
         setIsRunning(true);
-      } else if (savedIsRunning === "false") {
-        const savedElapsed = await AsyncStorage.getItem("elapsedMs");
-        if (savedElapsed !== null) setElapsedMs(Number(savedElapsed));
+      } else if (savedElapsed !== null) {
+        setElapsedMs(Number(savedElapsed));
       }
     };
+
     restoreTimer();
   }, []);
 
   useEffect(() => {
-    fetchTitles();
-  }, []);
+    if (!user?.uid) {
+      setTasks([]);
+      return;
+    }
+
+    ensureTodoListDocument(user.uid).catch((error) => {
+      console.log("Create todo list error:", error);
+    });
+
+    const unsubscribe = subscribeToTodos(user.uid, (items) => {
+      const nextTasks = items.filter((item) => !item.isArchived);
+      setTasks(nextTasks);
+
+      if (selectedTaskId && !nextTasks.some((item) => item.id === selectedTaskId)) {
+        setSelectedTaskId("");
+        setSelectedTaskName("");
+      }
+    });
+
+    return unsubscribe;
+  }, [selectedTaskId, user?.uid]);
 
   return (
     <View style={Layout.screen}>
       {!isRunning && (
         <View style={styles.activitySection}>
-          <Text style={styles.label}>Activity title</Text>
+          <Text style={styles.label}>Task</Text>
 
-          <TextInput
-            style={Input.field}
-            placeholder="Write a new activity title"
-            placeholderTextColor={Colors.textMuted}
-            value={title}
-            onChangeText={(text) => {
-              setTitle(text);
-              setSaved(false);
-            }}
-          />
+          <TouchableOpacity
+            style={styles.listToggle}
+            onPress={() => setShowList(!showList)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.listToggleText}>
+              {selectedTaskName
+                ? showList
+                  ? "Hide task list"
+                  : selectedTaskName
+                : showList
+                  ? "Hide task list"
+                  : "Choose a task"}
+            </Text>
+          </TouchableOpacity>
 
-          {}
           {showList && (
             <FlatList
-              data={activityTitles}
-              keyExtractor={(item) => item}
-              style={[Dropdown.list, { maxHeight: 140 }]} 
+              data={tasks}
+              keyExtractor={(item) => item.id}
+              style={[Dropdown.list, { maxHeight: 180 }]}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={Dropdown.item}
                   onPress={() => {
-                    setTitle(item);
+                    setSelectedTaskId(item.id);
+                    setSelectedTaskName(item.name);
                     setShowList(false);
                     setSaved(false);
                   }}
                 >
-                  <Text style={Dropdown.itemText}>{item}</Text>
+                  <Text style={Dropdown.itemText}>{item.name}</Text>
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
                 <View style={Dropdown.empty}>
-                  <Text style={Dropdown.emptyText}>Ei tallennettuja aktiviteetteja</Text>
+                  <Text style={Dropdown.emptyText}>No active tasks available</Text>
                 </View>
               }
             />
           )}
 
-          {!isRunning && elapsedMs > 0 && (
-          <TouchableOpacity
-            style={[Btn.primary, styles.saveBtn, (!title.trim() || saved) && styles.disabled]}
-            onPress={handleSave}
-            disabled={!title.trim() || saved}
-          >
-            <Text style={Btn.primaryText}>
-              {saved ? "✓ Saved" : "Save activity"}
-            </Text>
-          </TouchableOpacity>
-        )}
-          <TouchableOpacity
-            style={styles.listToggle}
-            onPress={() => setShowList(!showList)}
-          >
-            <Text style={styles.listToggleText}>
-              {showList ? "▲ Hide the list" : "▼ Choose an existing title"}
-            </Text>
-          </TouchableOpacity>
-
-
+          {!isRunning && elapsedMs > 0 && !showList && (
+            <TouchableOpacity
+              style={[Btn.primary, styles.saveBtn, (!selectedTaskId || saved) && styles.disabled]}
+              onPress={handleSave}
+              disabled={!selectedTaskId || saved}
+            >
+              <Text style={Btn.primaryText}>
+                {saved ? "âœ“ Saved" : "Save time to task"}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
       <View style={styles.clockSection}>
         {saveMessage ? (
           <Text style={styles.saveMessage}>{saveMessage}</Text>
-        ) : title.trim() ? (
-          <Text style={styles.activeTitle}>{title.trim()}</Text>
+        ) : selectedTaskName ? (
+          <Text style={styles.activeTitle}>{selectedTaskName}</Text>
         ) : (
-          <Text style={styles.activeTitleEmpty}>No title chosen</Text>
+          <Text style={styles.activeTitleEmpty}>No task chosen</Text>
         )}
 
         <Text style={Typography.timer}>{formatTime(elapsedMs)}</Text>
 
         <View style={styles.buttonRow}>
           <TouchableOpacity
-            style={[Btn.outline, styles.btnSmall, isRunning && styles.disabled]}
+            style={[Btn.outline, styles.btnSmall, (isRunning || !selectedTaskId) && styles.disabled]}
             onPress={handleStart}
-            disabled={isRunning}
+            disabled={isRunning || !selectedTaskId}
           >
             <Text style={Btn.outlineText}>Start</Text>
           </TouchableOpacity>
@@ -244,13 +267,18 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   listToggle: {
-    paddingVertical: 8,
-    marginBottom: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.white,
+    marginBottom: 8,
   },
   listToggleText: {
-    color: Colors.primary,
-    fontSize: 14,
-    fontWeight: "600",
+    color: Colors.text,
+    fontSize: 16,
+    fontWeight: "500",
   },
   saveBtn: {
     marginTop: 8,
