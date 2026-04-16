@@ -1,6 +1,6 @@
 import { getDoc, doc, onSnapshot, runTransaction, setDoc, } from "firebase/firestore";
 import { firestore } from "../../firebase/config";
-import { Item } from "./TodoItem";
+import { Item, TimeSpentEntry } from "./TodoItem";
 
 type StoredTodoList = {
   items?: Partial<Item>[];
@@ -15,12 +15,34 @@ function createTodoId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function createEntryDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeTimeSpentEntries(entries?: TimeSpentEntry[]) {
+  if (!Array.isArray(entries)) {
+    return [];
+  }
+
+  return entries
+    .filter((entry) => typeof entry?.durationMs === "number")
+    .map((entry) => ({
+      date: typeof entry.date === "string" ? entry.date : createEntryDate(new Date()),
+      durationMs: entry.durationMs,
+      savedAt: typeof entry.savedAt === "string" ? entry.savedAt : new Date().toISOString(),
+    }));
+}
+
 function normalizeStoredItem(item: Partial<Item>, index: number, userUid: string): Item {
   return {
     id: item.id ?? createTodoId(),
     name: item.name ?? "Untitled task",
     deadline: item.deadline,
     timeSpentMs: item.timeSpentMs ?? 0,
+    timeSpentEntries: normalizeTimeSpentEntries(item.timeSpentEntries),
     ownerUid: item.ownerUid ?? userUid,
     isDone: item.isDone ?? false,
     isArchived: item.isArchived ?? false,
@@ -74,6 +96,7 @@ export async function addTodo(userUid: string, name: string, deadline: Date) {
         name,
         deadline: deadline.toISOString(),
         timeSpentMs: 0,
+        timeSpentEntries: [],
         ownerUid: userUid,
         isDone: false,
         isArchived: false,
@@ -164,6 +187,45 @@ export async function updateTodo(
             ...item,
             name: updates.name,
             deadline: updates.deadline.toISOString(),
+            updatedAt: now,
+          }
+        : item
+    );
+
+    transaction.set(
+      listRef,
+      {
+        items: nextItems,
+        updatedAt: now,
+      },
+      { merge: true }
+    );
+  });
+}
+
+export async function addTimeSpentToTodo(userUid: string, taskId: string, durationMs: number) {
+  const listRef = getTodoListRef(userUid);
+
+  await runTransaction(firestore, async (transaction) => {
+    const snapshot = await transaction.get(listRef);
+    const data = snapshot.data() as StoredTodoList | undefined;
+    const currentItems = Array.isArray(data?.items) ? data.items : [];
+    const now = new Date().toISOString();
+    const entryDate = createEntryDate(new Date());
+
+    const nextItems = currentItems.map((item) =>
+      item.id === taskId
+        ? {
+            ...item,
+            timeSpentMs: (item.timeSpentMs ?? 0) + durationMs,
+            timeSpentEntries: [
+              ...normalizeTimeSpentEntries(item.timeSpentEntries as TimeSpentEntry[] | undefined),
+              {
+                date: entryDate,
+                durationMs,
+                savedAt: now,
+              },
+            ],
             updatedAt: now,
           }
         : item
