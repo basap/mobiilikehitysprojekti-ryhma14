@@ -5,11 +5,15 @@ import { Item } from './TodoItem'
 interface Props {
   item: Item;
   onToggle: (id: string) => void;
+  onEdit: (item: Item) => void;
 }
 
-export default function TodoToggle({ item, onToggle }: Props) {
+export default function TodoToggle({ item, onToggle, onEdit }: Props) {
   return (
-    <Pressable onPress={() => onToggle(item.id)}>
+    <Pressable 
+      onPress={() => onToggle(item.id)}
+      onLongPress={() => onEdit(item)}
+    >
       <View style={styles.rowFront}>
         <Text style={[styles.text, item.done && styles.textDone]}>
           {item.name}

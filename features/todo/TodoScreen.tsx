@@ -20,19 +20,8 @@ export default function StatsScreen() {
   const deleteItem = (id: string) => {
     setItems(prev => prev.filter(item => item.id !== id));
   };
-
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
   //Load items
- /* useEffect(() => {
-    (async () => {
-      try {
-        const json = await AsyncStorage.getItem(STORAGE_KEY);
-        if (json) setItems(JSON.parse(json));
-      } catch (e) {
-        //todo error 
-      }
-      setLoaded(true);
-    })();
-  }, []); */
   useEffect(() => {
     const load = async () => {
       const user = auth.currentUser;
@@ -67,12 +56,11 @@ export default function StatsScreen() {
   useEffect(() => {
     if (!loaded) return;
     const timeout = setTimeout(() => {
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-      handleSave();
+      handleSave(items);
     }, 500);
     return () => clearTimeout(timeout);
   }, [items, loaded]);
-
+  //Add item
   const addItem = (name: string, date: Date) => {
     setItems(prev => [
       ...prev,
@@ -84,7 +72,7 @@ export default function StatsScreen() {
       },
     ]);
   };
-
+  //Toggle item
   const toggleItem = (id: string) => {
     setItems(prev =>
       prev.map(item =>
@@ -92,17 +80,17 @@ export default function StatsScreen() {
       )
     );
   };
-
-  async function handleSave(): Promise<void> {
+  //async saving
+  async function handleSave(itemsToSave: Item[]) {
     const user = auth.currentUser;
     if (user?.isAnonymous || !user) {
-      console.log("No user logged in");
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(itemsToSave));
       return;
     }
     try {
       const docRef = doc(firestore, "users", user.uid, "todos", "list");
       await setDoc(docRef, {
-        items: items,
+        items: itemsToSave,
         updatedAt: serverTimestamp(),
       });
       console.log("Todos saved successfully!");
@@ -110,24 +98,38 @@ export default function StatsScreen() {
       console.error("Failed to save todos", err);
     }
   }
+  //Edit Item
+  const editItem = (id: string, name: string, date: Date) => {
+  setItems(prev =>
+    prev.map(item =>
+      item.id === id
+        ? { ...item, name, date: date.toISOString() }
+        : item
+    )
+  );
+};
 
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Todo list</Text>
-        {/*
-        <Pressable style={styles.homeButton} onPress={() => navigation.navigate('Home' as never)}>
-          <Text style={Btn.outlineText}>Home</Text>
-        </Pressable>
-        */}
       </View>
-      <TodoInput onAdd={addItem}/>
+      <TodoInput 
+        onAdd={addItem}
+        onEdit={editItem}
+        editingItem={editingItem}
+        clearEditing={() => setEditingItem(null)}
+      />
       <SwipeListView
         data={items}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <TodoToggle item={item} onToggle={toggleItem} />
+          <TodoToggle 
+            item={item} 
+            onToggle={toggleItem} 
+            onEdit={(item) => setEditingItem(item)}
+          />
         )}
         renderHiddenItem={({ item }) => (
           <View style={styles.rowBack}>

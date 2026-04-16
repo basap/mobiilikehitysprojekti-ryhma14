@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, StyleSheet, Modal, Text } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Item } from './TodoItem';
 
 interface Props {
   onAdd: (text: string, date: Date) => void;
+  onEdit: (id: string, text: string, date: Date) => void;
+  editingItem: Item | null;
+  clearEditing: () => void;
 }
 
-export default function TodoInput({ onAdd }: Props) {
+export default function TodoInput({ onAdd, onEdit, editingItem, clearEditing }: Props) {
   const [value, setValue] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [date, setDate] = useState(new Date());
@@ -14,11 +18,24 @@ export default function TodoInput({ onAdd }: Props) {
 
   const add = () => {
     if (!value.trim()) return;
-    onAdd(value.trim(), date);
+    if (editingItem) {
+      onEdit(editingItem.id, value.trim(), date);
+      clearEditing();
+    } else {
+      onAdd(value.trim(), date);
+    }
     setValue('');
     setDate(new Date());
     setModalVisible(!modalVisible)
   };
+
+  useEffect(() => {
+  if (editingItem) {
+    setValue(editingItem.name);
+    setDate(new Date(editingItem.date));
+    setModalVisible(true);
+  }
+}, [editingItem]);
 
   return (
     <View style={styles.container}>
@@ -57,7 +74,7 @@ export default function TodoInput({ onAdd }: Props) {
                 )}
               </View>
               <View style={styles.buttonRow}>
-                <Button title="Add" onPress={add} />
+                <Button title={editingItem ? "Save" : "Add"} onPress={add} />
                 <Button title="Close" onPress={() => setModalVisible(!modalVisible)} />
               </View>
             </View>

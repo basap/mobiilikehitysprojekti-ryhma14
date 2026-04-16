@@ -2,7 +2,7 @@ export interface Item {
   id: string;
   name: string;
   done: boolean;
-  date?: string;
+  date: string;
 }
 
 export default Item;
