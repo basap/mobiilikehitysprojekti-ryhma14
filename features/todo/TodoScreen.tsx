@@ -220,11 +220,7 @@ export default function TodoScreen() {
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <Text style={Typography.screenTitle}>Todo</Text>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={handleArchivePress}
-            style={styles.archiveButton}
-          >
+          <TouchableOpacity activeOpacity={0.7} onPress={handleArchivePress} style={styles.archiveButton}>
             <Text style={styles.archiveButtonText}>
               {selectedTaskIds.length > 0 ? "Archive selected" : "Archive"}
             </Text>
@@ -232,10 +228,7 @@ export default function TodoScreen() {
         </View>
 
         <View style={styles.dropdownWrap}>
-          <Pressable
-            onPress={() => setShowSortMenu((current) => !current)}
-            style={styles.dropdownButton}
-          >
+          <Pressable onPress={() => setShowSortMenu((current) => !current)} style={styles.dropdownButton}>
             <Text style={styles.dropdownLabel}>Sort by</Text>
             <Text style={styles.dropdownValue}>{selectedSortLabel}</Text>
           </Pressable>
@@ -280,16 +273,11 @@ export default function TodoScreen() {
                   </Pressable>
 
                   <View style={styles.rowActions}>
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() => navigation.navigate("Stopwatch" as never)}
-                      style={styles.iconButton}
-                    >
+                    <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.navigate("Stopwatch" as never)} style={styles.iconButton}>
                       <Text style={styles.stopwatchIcon}>⏱</Text>
                     </TouchableOpacity>
 
-                    <Pressable
-                      onPress={() => handleToggleSelected(item.id)}
+                    <Pressable onPress={() => handleToggleSelected(item.id)}
                       style={[
                         styles.checkbox,
                         selectedTaskIds.includes(item.id) ? styles.checkboxSelected : null,

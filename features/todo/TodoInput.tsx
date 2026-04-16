@@ -1,16 +1,5 @@
 import React, { useMemo, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, Pressable,ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Btn, Card, Colors, Input, ModalStyle, Radius, Spacing, Typography } from "../../style/styles";
 
@@ -73,11 +62,7 @@ export default function TodoInput({ onAdd }: Props) {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => setModalVisible(true)}
-        style={styles.openButton}
-      >
+      <TouchableOpacity activeOpacity={0.7} onPress={() => setModalVisible(true)} style={styles.openButton}>
         <Text style={Btn.primaryText}>Add todo</Text>
       </TouchableOpacity>
 
@@ -91,14 +76,7 @@ export default function TodoInput({ onAdd }: Props) {
               <View style={styles.gapLarge} />
 
               <Text style={Typography.inputLabel}>Todo name</Text>
-              <TextInput
-                autoFocus
-                style={Input.field}
-                value={value}
-                onChangeText={setValue}
-                placeholder="Write your todo name"
-                placeholderTextColor={Colors.textMuted}
-              />
+              <TextInput autoFocus style={Input.field} value={value} onChangeText={setValue} placeholder="Write your todo name" placeholderTextColor={Colors.textMuted} />
 
               <View style={styles.gapMedium} />
               <Text style={Typography.inputLabel}>Deadline day</Text>
@@ -108,11 +86,7 @@ export default function TodoInput({ onAdd }: Props) {
 
               {showPicker ? (
                 <View style={styles.calendarWrap}>
-                  <DateTimePicker
-                    value={selectedDate}
-                    mode="date"
-                    display={Platform.OS === "ios" ? "inline" : "calendar"}
-                    themeVariant="light"
+                  <DateTimePicker value={selectedDate} mode="date" display={Platform.OS === "ios" ? "inline" : "calendar"} themeVariant="light"
                     onChange={(_, nextDate) => {
                       if (nextDate) {
                         setSelectedDate(nextDate);
@@ -133,9 +107,7 @@ export default function TodoInput({ onAdd }: Props) {
                   <Text style={styles.timeLabel}>Hour</Text>
                   <ScrollView style={styles.timeList} nestedScrollEnabled>
                     {hours.map((hour) => (
-                      <Pressable
-                        key={hour}
-                        onPress={() => setSelectedHour(hour)}
+                      <Pressable key={hour} onPress={() => setSelectedHour(hour)}
                         style={[
                           styles.timeOption,
                           selectedHour === hour ? styles.timeOptionSelected : null,
