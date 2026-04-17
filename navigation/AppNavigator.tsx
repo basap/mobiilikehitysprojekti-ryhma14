@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import LoginScreen from "../features/auth/LoginScreen";
 import HomeScreen from "../features/home/HomeScreen";
 import StatsScreen from "../features/stats/StatsScreen";
+import AllTaskStatsScreen from "../features/stats/AllTaskStatsScreen";
 import WelcomeScreen from "../features/auth/WelcomeScreen";
 import RegisterScreen from "../features/auth/RegisterScreen";
 import StopwatchScreen from "../features/stopwatch/StopwatchScreen";
@@ -35,6 +36,7 @@ function MainStack() {
       <Stack.Screen name="Stopwatch" component={StopwatchScreen} />
       <Stack.Screen name="Timer" component={TimerScreen} />
       <Stack.Screen name="Stats" component={StatsScreen} />
+      <Stack.Screen name="AllTaskStats" component={AllTaskStatsScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
     </Stack.Navigator>
   );
