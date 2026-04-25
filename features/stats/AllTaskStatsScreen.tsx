@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from "react-native";
+import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { PieChart } from "react-native-chart-kit";
 import { useAuth } from "../../contexts/AuthContext";
-import { Btn, Card, Colors, Dropdown, Layout, Spacing, Typography, Radius } from "../../style/styles";
+import { Btn, Card, Colors, Dropdown, Layout, ModalStyle, Spacing, Typography, Radius } from "../../style/styles";
 import { Item } from "../todo/TodoItem";
 import { ensureTodoListDocument, subscribeToTodos } from "../todo/todoStore";
 import { RangeValue, buildTaskTotals, formatMinutes, rangeOptions, } from "./statsUtils";
@@ -67,40 +67,13 @@ export default function AllTaskStatsScreen() {
   return (
     <View style={Layout.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text>All tasks</Text>
+        <Text style={Typography.screenTitle}>All tasks</Text>
 
         <View style={styles.dropdownWrap}>
-          <Pressable onPress={() => setShowRangeMenu((prev) => !prev)} style={styles.dropdownButton}>
+          <Pressable onPress={() => setShowRangeMenu(true)} style={styles.dropdownButton}>
             <Text style={styles.dropdownLabel}>Range</Text>
             <Text style={styles.dropdownValue}>{selectedRangeLabel}</Text>
           </Pressable>
-
-          {showRangeMenu && (
-            <View style={Dropdown.list}>
-              {rangeOptions.map((option) => (
-                <Pressable
-                  key={option.value}
-                  onPress={() => {
-                    setRange(option.value);
-                    setShowRangeMenu(false);
-                  }}
-                  style={[
-                    Dropdown.item,
-                    option.value === range && Dropdown.highlightedItem,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      Dropdown.itemText,
-                      option.value === range && Dropdown.highlightedText,
-                    ]}
-                  >
-                    {option.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
         </View>
 
         <View style={styles.chartCard}>
@@ -129,21 +102,30 @@ export default function AllTaskStatsScreen() {
               </View>
             </>
           ) : (
-            <View>
-              <Text>
+            <View style={styles.emptyState}>
+              <Text style={Typography.body}>
                 No saved time for this range.
               </Text>
             </View>
           )}
         </View>
 
-        <View>
+        <View style={styles.legendCard}>
           {slices.map((slice, index) => (
             <View key={slice.id}>
-              <View>
+              <View style={styles.legendRow}>
                 <View style={styles.legendTask}>
                   <View style={[ styles.legendColor, { backgroundColor: slice.color }, ]} />
-                  <Text>{slice.name} {slice.percentage.toFixed(1)}% {formatMinutes(slice.durationMs)}</Text>
+                  <Text style={styles.legendName}>{slice.name}</Text>
+                </View>
+
+                <View style={styles.legendValues}>
+                  <Text style={styles.legendPercent}>
+                    {slice.percentage.toFixed(1)}%
+                  </Text>
+                  <Text style={styles.legendTime}>
+                    {formatMinutes(slice.durationMs)}
+                  </Text>
                 </View>
               </View>
 
@@ -152,6 +134,48 @@ export default function AllTaskStatsScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showRangeMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRangeMenu(false)}
+      >
+        <TouchableOpacity
+          style={ModalStyle.backdrop}
+          activeOpacity={1}
+          onPress={() => setShowRangeMenu(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
+            <Text style={Typography.pageHeading}>Select Range</Text>
+            <View style={styles.modalGap} />
+            <ScrollView style={styles.modalList} nestedScrollEnabled>
+              {rangeOptions.map((option) => (
+                <Pressable
+                  key={option.value}
+                  onPress={() => {
+                    setRange(option.value);
+                    setShowRangeMenu(false);
+                  }}
+                  style={[
+                    Dropdown.item,
+                    option.value === range && Dropdown.highlightedItem,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      Dropdown.itemText,
+                      option.value === range && Dropdown.highlightedText,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -179,11 +203,66 @@ const styles = StyleSheet.create({
     color: Colors.primaryDark,
     fontWeight: "600",
   },
+  lastDropdownItem: {
+    borderBottomWidth: 0,
+  },
   chartCard: {
     ...Card.base,
     alignItems: "center",
     justifyContent: "center",
     minHeight: 280,
+  },
+  donutBase: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  segmentWrapper: {
+    position: "absolute",
+  },
+  segment: {
+    position: "absolute",
+    width: 8,
+    borderRadius: Radius.pill,
+  },
+  donutCenter: {
+    width: 112,
+    height: 112,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  donutCenterLabel: {
+    ...Typography.caption,
+  },
+  donutCenterValue: {
+    ...Typography.body,
+    fontWeight: "700",
+    textAlign: "center",
+    paddingHorizontal: Spacing.xs,
+  },
+  emptyDonut: {
+    width: 112,
+    height: 112,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  legendCard: {
+    ...Card.base,
+    paddingVertical: 0,
+    overflow: "hidden",
+  },
+  legendRow: {
+    ...Layout.rowBetween,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    gap: Spacing.md,
   },
   legendTask: {
     flex: 1,
@@ -196,10 +275,30 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: Radius.pill,
   },
+  legendName: {
+    ...Typography.body,
+    flex: 1,
+  },
+  legendValues: {
+    alignItems: "flex-end",
+  },
+  legendPercent: {
+    ...Typography.body,
+    fontWeight: "700",
+  },
+  legendTime: {
+    ...Typography.caption,
+  },
   divider: {
     height: 1,
     backgroundColor: Colors.borderLight,
     marginHorizontal: Spacing.md,
+  },
+  emptyState: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
   },
   totalContainer: {
     alignItems: "center",
@@ -214,5 +313,18 @@ const styles = StyleSheet.create({
   chartWrapper: {
     alignItems: "center",
     width: "100%"
-  }
+  },
+  modalCard: {
+    ...ModalStyle.container,
+    width: "88%",
+    maxWidth: 380,
+    maxHeight: "70%",
+    paddingVertical: Spacing.md,
+  },
+  modalGap: {
+    height: Spacing.sm,
+  },
+  modalList: {
+    maxHeight: 320,
+  },
 });
