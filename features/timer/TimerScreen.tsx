@@ -1,9 +1,3 @@
-<<<<<<< Updated upstream
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList, Pressable } from 'react-native';
-import { Input, Spacing, Typography, Btn, Layout, Dropdown } from '../../style/styles';
-import { Timer } from '../utils/Timer';
-=======
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -13,7 +7,6 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Typography, Btn, Layout, Colors, Dropdown, Input, Spacing, Radius } from "../../style/styles";
 import { Item } from "../todo/TodoItem";
 import { addTimeSpentToTodo, ensureTodoListDocument, subscribeToTodos } from "../todo/todoStore";
->>>>>>> Stashed changes
 
 const STORAGE_KEYS = {
   startTime: "timerStartTime",
@@ -24,7 +17,6 @@ const STORAGE_KEYS = {
   selectedTaskName: "timerSelectedTaskName",
 };
 
-// TODO: replace with real data from storage
 const PRESET_TIMERS = [
   { label: "Quick break", seconds: 300 },
   { label: "Pomodoro", seconds: 900 },
@@ -32,15 +24,8 @@ const PRESET_TIMERS = [
 ];
 
 export default function TimerScreen() {
-<<<<<<< Updated upstream
-  const [durationMs, setDurationMs] = useState(0);
-  const [display, setDisplay] = useState('00:00');
-  const [query, setQuery] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
-=======
   const { user } = useAuth();
 
->>>>>>> Stashed changes
   const [isRunning, setIsRunning] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [durationMs, setDurationMs] = useState(0);
@@ -354,16 +339,10 @@ export default function TimerScreen() {
   }, []);
 
   return (
-<<<<<<< Updated upstream
-    <Pressable onPress={hideDropdown} style={Layout.screen}>
-      <View style={[Layout.center, { overflow: 'visible' }]}>
-        <Text style={Typography.bigTitle}>Timer</Text>
-=======
     <View style={Layout.screen}>
       {!isRunning && (
         <View style={styles.activitySection}>
           <Text style={styles.label}>Activity / Task</Text>
->>>>>>> Stashed changes
 
           <TextInput
             style={Input.field}
@@ -551,9 +530,6 @@ export default function TimerScreen() {
       </View>
     </View>
   );
-<<<<<<< Updated upstream
-}
-=======
 }
 
 const styles = StyleSheet.create({
@@ -687,4 +663,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
->>>>>>> Stashed changes
