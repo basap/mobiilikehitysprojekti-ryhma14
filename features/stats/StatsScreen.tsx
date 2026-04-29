@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from "react-native";
+import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { BarChart } from "react-native-chart-kit";
 import { useAuth } from "../../contexts/AuthContext";
-import { Btn, Card, Colors, Dropdown, Layout, Spacing, Typography } from "../../style/styles";
+import { Btn, Card, Colors, Dropdown, Layout, ModalStyle, Spacing, Typography } from "../../style/styles";
 import { Item } from "../todo/TodoItem";
 import { ensureTodoListDocument, subscribeToTodos } from "../todo/todoStore";
 import { RangeValue, buildAllTimeBars, buildDayBars, buildMonthBars, filterEntriesByRange, formatMinutes, rangeOptions, } from "./statsUtils";
@@ -70,7 +70,7 @@ export default function StatsScreen() {
 
   const chartData = {
     labels: chartBars.map((b, i) =>
-      i % 5 === 0 ? b.label : ""
+      i % 1 === 0 ? b.label : ""
     ),
     datasets: [
       {
@@ -84,77 +84,51 @@ export default function StatsScreen() {
     chartBars.length * 60
   );
 
+  const closeMenus = () => {
+    setShowRangeMenu(false);
+    setShowTaskMenu(false);
+  };
+
   return (
     <View style={Layout.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text>Statistics</Text>
+        <Text style={Typography.screenTitle}>Statistics</Text>
 
         <View style={styles.controls}>
           <View style={styles.dropdownWrap}>
-            <Pressable onPress={() => { setShowRangeMenu((prev) => !prev); setShowTaskMenu(false); }} style={styles.dropdownButton}>
+            <Pressable
+              onPress={() => {
+                setShowRangeMenu(true);
+                setShowTaskMenu(false);
+              }}
+              style={styles.dropdownButton}
+            >
               <Text style={styles.dropdownLabel}>Range</Text>
               <Text style={styles.dropdownValue}>{selectedRangeLabel}</Text>
             </Pressable>
-
-            {showRangeMenu && (
-              <View style={Dropdown.list}>
-                {rangeOptions.map((option) => (
-                  <Pressable
-                    key={option.value}
-                    onPress={() => {
-                      setRange(option.value);
-                      setShowRangeMenu(false);
-                    }}
-                    style={[
-                      Dropdown.item,
-                      option.value === range && Dropdown.highlightedItem,
-                    ]}
-                  >
-                    <Text style={[ Dropdown.itemText, option.value === range && Dropdown.highlightedText, ]}>
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
           </View>
 
           <View style={styles.dropdownWrap}>
-            <Pressable onPress={() => { setShowTaskMenu((prev) => !prev); setShowRangeMenu(false); }} style={styles.dropdownButton}>
+            <Pressable
+              onPress={() => {
+                setShowTaskMenu(true);
+                setShowRangeMenu(false);
+              }}
+              style={styles.dropdownButton}
+            >
               <Text style={styles.dropdownLabel}>Task</Text>
               <Text style={styles.dropdownValue}>
                 {selectedTask?.name ?? "Choose task"}
               </Text>
             </Pressable>
-
-            {showTaskMenu && (
-              <View style={Dropdown.list}>
-                {items.map((item) => (
-                  <Pressable
-                    key={item.id}
-                    onPress={() => {
-                      setSelectedTaskId(item.id);
-                      setShowTaskMenu(false);
-                    }}
-                    style={[
-                      Dropdown.item,
-                      item.id === selectedTaskId && Dropdown.highlightedItem,
-                    ]}>
-                    <Text style={[ Dropdown.itemText, item.id === selectedTaskId && Dropdown.highlightedText, ]}>
-                      {item.name}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
           </View>
         </View>
 
         <View style={styles.chartCard}>
           {selectedTask ? (
             <>
-              <Text>{selectedTask.name}</Text>
-              <Text>
+              <Text style={styles.chartTitle}>{selectedTask.name}</Text>
+              <Text style={styles.totalTimeLabel}>
                 Time spent: {formatMinutes(totalDuration)}
               </Text>
 
@@ -180,26 +154,108 @@ export default function StatsScreen() {
                   />
                 </ScrollView>
               ) : (
-                <View>
-                  <Text>
+                <View style={styles.emptyState}>
+                  <Text style={Typography.body}>
                     No saved time for this range.
                   </Text>
                 </View>
               )}
             </>
           ) : (
-            <View>
-              <Text>
+            <View style={styles.emptyState}>
+              <Text style={Typography.body}>
                 Choose a task to see statistics.
               </Text>
             </View>
           )}
         </View>
 
-        <Pressable onPress={() => navigation.navigate("AllTaskStats" as never)}>
-          <Text>All tasks</Text>
+        <Pressable onPress={() => navigation.navigate("AllTaskStats" as never)} style={styles.allTasksButton}>
+          <Text style={Btn.outlineText}>All tasks</Text>
         </Pressable>
       </ScrollView>
+
+      <Modal
+        visible={showRangeMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={closeMenus}
+      >
+        <TouchableOpacity style={ModalStyle.backdrop} activeOpacity={1} onPress={closeMenus}>
+          <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
+            <Text style={Typography.pageHeading}>Select Range</Text>
+            <View style={styles.modalGap} />
+            <ScrollView style={styles.modalList} nestedScrollEnabled>
+              {rangeOptions.map((option) => (
+                <Pressable
+                  key={option.value}
+                  onPress={() => {
+                    setRange(option.value);
+                    setShowRangeMenu(false);
+                  }}
+                  style={[
+                    Dropdown.item,
+                    option.value === range && Dropdown.highlightedItem,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      Dropdown.itemText,
+                      option.value === range && Dropdown.highlightedText,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
+      <Modal
+        visible={showTaskMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={closeMenus}
+      >
+        <TouchableOpacity style={ModalStyle.backdrop} activeOpacity={1} onPress={closeMenus}>
+          <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
+            <Text style={Typography.pageHeading}>Select Task</Text>
+            <View style={styles.modalGap} />
+            <ScrollView style={styles.modalList} nestedScrollEnabled>
+              {items.length > 0 ? (
+                items.map((item) => (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => {
+                      setSelectedTaskId(item.id);
+                      setShowTaskMenu(false);
+                    }}
+                    style={[
+                      Dropdown.item,
+                      item.id === selectedTaskId && Dropdown.highlightedItem,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        Dropdown.itemText,
+                        item.id === selectedTaskId && Dropdown.highlightedText,
+                      ]}
+                    >
+                      {item.name}
+                    </Text>
+                  </Pressable>
+                ))
+              ) : (
+                <View style={Dropdown.empty}>
+                  <Text style={Dropdown.emptyText}>No tasks found.</Text>
+                </View>
+              )}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -232,5 +288,35 @@ const styles = StyleSheet.create({
   },
   chartCard: {
     ...Card.base,
+  },
+  chartTitle: {
+    ...Typography.sectionHeading,
+    marginBottom: Spacing.xs,
+  },
+  totalTimeLabel: {
+    ...Typography.subtitle,
+    marginBottom: Spacing.md,
+  },
+  emptyState: {
+    minHeight: 200,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  allTasksButton: {
+    ...Btn.outline,
+    width: "100%",
+  },
+  modalCard: {
+    ...ModalStyle.container,
+    width: "88%",
+    maxWidth: 380,
+    maxHeight: "70%",
+    paddingVertical: Spacing.md,
+  },
+  modalGap: {
+    height: Spacing.sm,
+  },
+  modalList: {
+    maxHeight: 320,
   },
 });
